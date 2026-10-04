@@ -1,98 +1,160 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+// Type untuk data aktivitas
+type Activity = {
+  title: string;
+  description: string;
+  icon: string;
+};
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+// Array of Objects
+const activities: Activity[] = [
+  {
+    title: "Belanja",
+    description: "Beli sabun dan deterjen",
+    icon: "🛒",
+  },
+  {
+    title: "Bersih-bersih",
+    description: "Membersihkan kamar",
+    icon: "🧹",
+  },
+  {
+    title: "Bayar Kos",
+    description: "Bayar kos sebelum tanggal 5",
+    icon: "💳",
+  },
+];
+
+// Custom Function untuk membuat card aktivitas
+function ActivityCard({ activity }: { activity: Activity }) {
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
+    <View style={styles.activityCard}>
+      <Text style={styles.icon}>{activity.icon}</Text>
+
+      <View style={styles.activityContent}>
+        <Text style={styles.activityTitle}>{activity.title}</Text>
+
+        <Text style={{ color: "#CBD5E1" }}>{activity.description}</Text>
+      </View>
+    </View>
   );
 }
 
+// Halaman utama KosMate
 export default function HomeScreen() {
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    <ScrollView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.appName}>KosMate 🏠</Text>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+        <Text style={styles.greeting}>Halo, Faul 👋</Text>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
+        <Text style={styles.subtitle}>
+          Kelola kebutuhan dan aktivitas kosmu
+        </Text>
+      </View>
 
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+      <View style={styles.summaryCard}>
+        <Text style={styles.summaryTitle}>Tagihan Bulan Ini</Text>
+
+        <Text style={styles.price}>Rp750.000</Text>
+
+        <Text style={{ color: "#60A5FA" }}>Belum dibayar</Text>
+      </View>
+
+      <Text style={styles.sectionTitle}>Aktivitas</Text>
+
+      {/* Loop menggunakan map() */}
+      {activities.map((activity, index) => (
+        <ActivityCard key={index} activity={activity} />
+      ))}
+    </ScrollView>
   );
 }
 
+// External Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+    backgroundColor: "#0B1220",
   },
-  safeArea: {
+
+  header: {
+    padding: 24,
+    paddingTop: 60,
+  },
+
+  appName: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#2563EB",
+  },
+
+  greeting: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginTop: 20,
+    color: "#FFFFFF",
+  },
+
+  subtitle: {
+    fontSize: 15,
+    color: "#CBD5E1",
+    marginTop: 6,
+  },
+
+  summaryCard: {
+    backgroundColor: "#111827",
+    marginHorizontal: 20,
+    padding: 20,
+    borderRadius: 16,
+  },
+
+  summaryTitle: {
+    fontSize: 16,
+    color: "#CBD5E1",
+  },
+
+  price: {
+    fontSize: 26,
+    fontWeight: "bold",
+    marginTop: 8,
+    color: "#FFFFFF",
+  },
+
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginHorizontal: 20,
+    marginTop: 28,
+    marginBottom: 12,
+    color: "#FFFFFF",
+  },
+
+  activityCard: {
+    backgroundColor: "#111827",
+    marginHorizontal: 20,
+    marginBottom: 12,
+    padding: 16,
+    borderRadius: 14,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  icon: {
+    fontSize: 30,
+    marginRight: 14,
+  },
+
+  activityContent: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+
+  activityTitle: {
+    fontSize: 17,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    marginBottom: 4,
   },
 });
