@@ -51,7 +51,7 @@ export default function HomeScreen() {
         <Text style={styles.greeting}>Halo, Sofa 👋</Text>
 
         <Text style={styles.subtitle}>
-          Kelola kebutuhan dan aktivitas kosmu
+          Kelola kebutuhan dan aktivitas sopi dengan mudah di KosMate
         </Text>
       </View>
 
