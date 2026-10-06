@@ -48,7 +48,7 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <Text style={styles.appName}>KosMate 🏠</Text>
 
-        <Text style={styles.greeting}>Halo, Faul 👋</Text>
+        <Text style={styles.greeting}>Halo, Sofa 👋</Text>
 
         <Text style={styles.subtitle}>
           Kelola kebutuhan dan aktivitas kosmu
@@ -77,7 +77,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0B1220",
+    backgroundColor: "#1c153602",
   },
 
   header: {
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#2563EB",
+    color: "#2611e6",
   },
 
   greeting: {
