@@ -1,10 +1,11 @@
 import { useRef } from "react";
 import {
   Dimensions,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  View
+  View,
 } from "react-native";
 
 const screenHeight = Dimensions.get("window").height;
@@ -19,18 +20,18 @@ type Activity = {
 // Array of Objects
 const activities: Activity[] = [
   {
-    title: "Laundry Terdekat",
-    description: "Temukan laundry terdekat dengan lokasi kos kamu.",
-    icon: "🧺",
+    title: "Belanja",
+    description: "Catat dan kelola kebutuhan belanja anak kos.",
+    icon: "🛒",
   },
   {
-    title: "Makanan Terdekat",
-    description: "Cari rekomendasi tempat makan di sekitar kos.",
-    icon: "🍽️",
+    title: "Bersih-bersih",
+    description: "Atur aktivitas kebersihan kamar dan tempat kos.",
+    icon: "🧹",
   },
   {
     title: "Bayar Kos",
-    description: "Catat tanggal dan jumlah pembayaran kos.",
+    description: "Catat dan ingat pembayaran kos setiap bulan.",
     icon: "💳",
   },
 ];
@@ -75,19 +76,30 @@ export default function HomeScreen() {
         {/* Nama aplikasi */}
         <Text style={styles.logo}>KosMate</Text>
 
-        <Text style={styles.greeting}>Halo, Faul 👋</Text>
+        {/* Isi hero */}
+        <View style={styles.heroCenter}>
+          <Text style={styles.heroTitle}>
+            Kelola Kehidupan Kos
+            {"\n"}
+            Jadi Lebih Mudah
+          </Text>
 
-        <Text style={styles.subtitle}>
-          Kelola kebutuhan dan aktivitas kosmu
-        </Text>
-      </View>
+          <Text style={styles.heroDescription}>
+            Kelola kebutuhan, aktivitas, dan pembayaran
+            {"\n"}
+            kos dalam satu aplikasi.
+          </Text>
 
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryTitle}>Tagihan Bulan Ini</Text>
-
-        <Text style={styles.price}>Rp750.000</Text>
-
-        <Text style={{ color: "#60A5FA" }}>Belum dibayar</Text>
+          <Pressable
+            onPress={handleStart}
+            style={({ pressed }) => [
+              styles.button,
+              pressed && styles.buttonPressed,
+            ]}
+          >
+            <Text style={styles.buttonText}>Mulai Kelola</Text>
+          </Pressable>
+        </View>
       </View>
 
       {/* ================= CONTENT ================= */}
@@ -115,7 +127,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1c153602",
+    backgroundColor: "#0B1220",
   },
 
   // HERO
@@ -129,7 +141,7 @@ const styles = StyleSheet.create({
   logo: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#2563EB",
+    color: "#DFAF34",
   },
 
   heroCenter: {
