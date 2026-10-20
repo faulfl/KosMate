@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { useRef } from "react";
 import {
   Dimensions,
@@ -37,9 +38,21 @@ const activities: Activity[] = [
 ];
 
 // Custom Function
-function ActivityCard({ activity }: { activity: Activity }) {
+function ActivityCard({
+  activity,
+  onPress,
+}: {
+  activity: Activity;
+  onPress: () => void;
+}) {
   return (
-    <View style={styles.activityCard}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.activityCard,
+        pressed && styles.cardPressed,
+      ]}
+    >
       <View style={styles.iconBox}>
         <Text style={styles.icon}>{activity.icon}</Text>
       </View>
@@ -49,12 +62,13 @@ function ActivityCard({ activity }: { activity: Activity }) {
 
         <Text style={styles.activityDescription}>{activity.description}</Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
 export default function HomeScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
+  const router = useRouter();
 
   // Custom Function untuk scroll
   function handleStart() {
@@ -114,7 +128,20 @@ export default function HomeScreen() {
         {/* Loop */}
         <View style={styles.activityList}>
           {activities.map((activity, index) => (
-            <ActivityCard key={index} activity={activity} />
+            <ActivityCard
+              key={index}
+              activity={activity}
+              onPress={() =>
+                router.push({
+                  pathname: "/activity",
+                  params: {
+                    title: activity.title,
+                    description: activity.description,
+                    icon: activity.icon,
+                  },
+                })
+              }
+            />
           ))}
         </View>
       </View>
@@ -220,6 +247,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#111827",
     borderRadius: 14,
     padding: 20,
+  },
+
+  cardPressed: {
+    opacity: 0.7,
   },
 
   iconBox: {
