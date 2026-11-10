@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   Pressable,
   ScrollView,
@@ -8,6 +9,12 @@ import {
   Text,
   View,
 } from "react-native";
+
+import {
+  fetchCurrentWeather,
+  interpretWeather,
+} from "@/services/weatherService";
+import type { WeatherInfo } from "@/types/weather";
 
 const screenHeight = Dimensions.get("window").height;
 
@@ -66,9 +73,155 @@ function ActivityCard({
   );
 }
 
+// Custom Function — Komponen Cuaca & Info Kos (Modul 3)
+function WeatherCard({
+  weatherInfo,
+  isLoading,
+  error,
+  onRefresh,
+}: {
+  weatherInfo: WeatherInfo | null;
+  isLoading: boolean;
+  error: string | null;
+  onRefresh: () => void;
+}) {
+  return (
+    <View style={styles.weatherCard}>
+      {isLoading ? (
+        <View style={styles.weatherLoadingRow}>
+          <ActivityIndicator size="small" color="#DFAF34" />
+          <Text style={styles.weatherLoadingText}>Memuat cuaca kos...</Text>
+        </View>
+      ) : error ? (
+        <View style={styles.weatherErrorRow}>
+          <Text style={styles.weatherErrorText}>⚠️ {error}</Text>
+          <Pressable
+            onPress={onRefresh}
+            style={({ pressed }) => [
+              styles.weatherRetryButton,
+              pressed && styles.buttonPressed,
+            ]}
+          >
+            <Text style={styles.weatherRetryText}>Coba lagi</Text>
+          </Pressable>
+        </View>
+      ) : weatherInfo ? (
+        <View style={styles.weatherCardInner}>
+          {/* Kolom Kiri: Suhu & Kondisi */}
+          <View style={styles.weatherLeftSection}>
+            <View style={styles.weatherHeadlineRow}>
+              <Text style={styles.weatherIconEmoji}>
+                {weatherInfo.weatherIcon}
+              </Text>
+              <Text style={styles.weatherTempText}>
+                {weatherInfo.temperature}°C
+              </Text>
+            </View>
+            <Text style={styles.weatherConditionText}>
+              {weatherInfo.weatherDescription}
+            </Text>
+            <Text style={styles.weatherDetailText}>
+              Area Kos • Lembap {weatherInfo.humidity}%
+            </Text>
+          </View>
+
+          {/* Kolom Kanan: Status Jemuran & Tombol Refresh */}
+          <View style={styles.weatherRightSection}>
+            <View
+              style={[
+                styles.laundryPill,
+                weatherInfo.isSafeForLaundry
+                  ? styles.laundryPillSafe
+                  : styles.laundryPillWarning,
+              ]}
+            >
+              <View
+                style={[
+                  styles.statusDot,
+                  weatherInfo.isSafeForLaundry
+                    ? styles.statusDotSafe
+                    : styles.statusDotWarning,
+                ]}
+              />
+              <Text
+                style={[
+                  styles.laundryPillText,
+                  weatherInfo.isSafeForLaundry
+                    ? styles.laundryTextSafe
+                    : styles.laundryTextWarning,
+                ]}
+              >
+                {weatherInfo.isSafeForLaundry ? "Aman Jemur" : "Waspada Hujan"}
+              </Text>
+            </View>
+
+            <Pressable
+              onPress={onRefresh}
+              style={({ pressed }) => [
+                styles.weatherRefreshBtn,
+                pressed && styles.buttonPressed,
+              ]}
+            >
+              <Text style={styles.weatherRefreshBtnText}>🔄 Perbarui</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
 export default function HomeScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const router = useRouter();
+
+  // State untuk fitur Cuaca Kos (Modul 3)
+  const [weatherInfo, setWeatherInfo] = useState<WeatherInfo | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fungsi async untuk mengambil data cuaca dari API
+  async function loadWeatherData() {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // async/await: menunggu hasil Promise dari fetchCurrentWeather()
+      const data = await fetchCurrentWeather();
+      setWeatherInfo(interpretWeather(data));
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Gagal mengambil data cuaca.";
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  // Mengambil data saat halaman pertama kali dimuat
+  useEffect(() => {
+    let isMounted = true;
+
+    fetchCurrentWeather()
+      .then((data) => {
+        if (isMounted) {
+          setWeatherInfo(interpretWeather(data));
+          setIsLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          const message =
+            err instanceof Error ? err.message : "Gagal mengambil data cuaca.";
+          setError(message);
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Custom Function untuk scroll
   function handleStart() {
@@ -87,8 +240,16 @@ export default function HomeScreen() {
       {/* ================= HERO ================= */}
 
       <View style={styles.hero}>
-        {/* Nama aplikasi */}
+        {/* Header Hero */}
         <Text style={styles.logo}>KosMate</Text>
+
+        {/* Widget Cuaca & Info Kos (Modul 3) */}
+        <WeatherCard
+          weatherInfo={weatherInfo}
+          isLoading={isLoading}
+          error={error}
+          onRefresh={loadWeatherData}
+        />
 
         {/* Isi hero */}
         <View style={styles.heroCenter}>
@@ -282,5 +443,158 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     color: "#CBD5E1",
+  },
+
+  // WEATHER WIDGET IN HERO (Modul 3)
+  weatherCard: {
+    marginTop: 20,
+    backgroundColor: "#111827",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#1E293B",
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+  },
+
+  weatherLoadingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 8,
+    gap: 10,
+  },
+
+  weatherLoadingText: {
+    fontSize: 13,
+    color: "#94A3B8",
+  },
+
+  weatherErrorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  weatherErrorText: {
+    fontSize: 12,
+    color: "#F87171",
+    flex: 1,
+  },
+
+  weatherRetryButton: {
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    backgroundColor: "#1F2937",
+    borderRadius: 6,
+  },
+
+  weatherRetryText: {
+    fontSize: 12,
+    color: "#DFAF34",
+    fontWeight: "600",
+  },
+
+  weatherCardInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  weatherLeftSection: {
+    flex: 1,
+  },
+
+  weatherHeadlineRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+
+  weatherIconEmoji: {
+    fontSize: 26,
+  },
+
+  weatherTempText: {
+    fontSize: 26,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+  },
+
+  weatherConditionText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#CBD5E1",
+    marginTop: 2,
+  },
+
+  weatherDetailText: {
+    fontSize: 11,
+    color: "#64748B",
+    marginTop: 2,
+  },
+
+  weatherRightSection: {
+    alignItems: "flex-end",
+    gap: 8,
+  },
+
+  laundryPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+
+  laundryPillSafe: {
+    backgroundColor: "rgba(16, 185, 129, 0.12)",
+    borderColor: "rgba(16, 185, 129, 0.3)",
+  },
+
+  laundryPillWarning: {
+    backgroundColor: "rgba(245, 158, 11, 0.12)",
+    borderColor: "rgba(245, 158, 11, 0.3)",
+  },
+
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 6,
+  },
+
+  statusDotSafe: {
+    backgroundColor: "#10B981",
+  },
+
+  statusDotWarning: {
+    backgroundColor: "#F59E0B",
+  },
+
+  laundryPillText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+
+  laundryTextSafe: {
+    color: "#34D399",
+  },
+
+  laundryTextWarning: {
+    color: "#FBBF24",
+  },
+
+  weatherRefreshBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    backgroundColor: "#1F2937",
+    borderRadius: 8,
+  },
+
+  weatherRefreshBtnText: {
+    fontSize: 11,
+    color: "#94A3B8",
+    fontWeight: "500",
   },
 });

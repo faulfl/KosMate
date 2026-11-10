@@ -1,40 +1,31 @@
-
-import { useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { useEffect, useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function ActivityScreen() {
   const router = useRouter();
 
-  const { title, description, icon } =
-    useLocalSearchParams<{
-      title?: string;
-      description?: string;
-      icon?: string;
-    }>();
+  const { title, description, icon } = useLocalSearchParams<{
+    title?: string;
+    description?: string;
+    icon?: string;
+  }>();
 
   const [isDone, setIsDone] = useState(false);
 
   useEffect(() => {
-    console.log(
-      isDone
-        ? "Aktivitas selesai"
-        : "Aktivitas belum selesai"
-    );
+    console.log("berhasil masuk");
+  }, [isDone]);
+
+  useEffect(() => {
+    console.log(isDone ? "Aktivitas selesai" : "Aktivitas belum selesai");
   }, [isDone]);
 
   return (
     <View style={styles.container}>
       <Text style={styles.icon}>{icon ?? "📋"}</Text>
 
-      <Text style={styles.title}>
-        {title ?? "Detail Aktivitas"}
-      </Text>
+      <Text style={styles.title}>{title ?? "Detail Aktivitas"}</Text>
 
       <Text style={styles.description}>
         {description ?? "Informasi aktivitas anak kos."}
@@ -47,10 +38,7 @@ export default function ActivityScreen() {
       </View>
 
       <Pressable
-        style={[
-          styles.button,
-          isDone && styles.doneButton,
-        ]}
+        style={[styles.button, isDone && styles.doneButton]}
         onPress={() => setIsDone(!isDone)}
       >
         <Text style={styles.buttonText}>
@@ -58,22 +46,15 @@ export default function ActivityScreen() {
         </Text>
       </Pressable>
 
-      <Pressable
-        style={styles.secondaryButton}
-        onPress={() => router.back()}
-      >
-        <Text style={styles.secondaryButtonText}>
-          Kembali
-        </Text>
+      <Pressable style={styles.secondaryButton} onPress={() => router.back()}>
+        <Text style={styles.secondaryButtonText}>Kembali</Text>
       </Pressable>
 
       <Pressable
         style={styles.secondaryButton}
         onPress={() => router.replace("/")}
       >
-        <Text style={styles.secondaryButtonText}>
-          Ke Halaman Utama
-        </Text>
+        <Text style={styles.secondaryButtonText}>Ke Halaman Utama</Text>
       </Pressable>
     </View>
   );
@@ -148,4 +129,5 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
   },
+  
 });
