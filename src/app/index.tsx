@@ -1,14 +1,19 @@
+
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Dimensions,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+
+import { supabase } from "../../lib/supabase";
 
 import {
   fetchCurrentWeather,
@@ -67,13 +72,15 @@ function ActivityCard({
       <View style={styles.activityInfo}>
         <Text style={styles.activityTitle}>{activity.title}</Text>
 
-        <Text style={styles.activityDescription}>{activity.description}</Text>
+        <Text style={styles.activityDescription}>
+          {activity.description}
+        </Text>
       </View>
     </Pressable>
   );
 }
 
-// Custom Function — Komponen Cuaca & Info Kos (Modul 3)
+// Custom Function — Komponen Cuaca & Info Kos
 function WeatherCard({
   weatherInfo,
   isLoading,
@@ -90,7 +97,9 @@ function WeatherCard({
       {isLoading ? (
         <View style={styles.weatherLoadingRow}>
           <ActivityIndicator size="small" color="#DFAF34" />
-          <Text style={styles.weatherLoadingText}>Memuat cuaca kos...</Text>
+          <Text style={styles.weatherLoadingText}>
+            Memuat cuaca kos...
+          </Text>
         </View>
       ) : error ? (
         <View style={styles.weatherErrorRow}>
@@ -107,7 +116,6 @@ function WeatherCard({
         </View>
       ) : weatherInfo ? (
         <View style={styles.weatherCardInner}>
-          {/* Kolom Kiri: Suhu & Kondisi */}
           <View style={styles.weatherLeftSection}>
             <View style={styles.weatherHeadlineRow}>
               <Text style={styles.weatherIconEmoji}>
@@ -117,15 +125,16 @@ function WeatherCard({
                 {weatherInfo.temperature}°C
               </Text>
             </View>
+
             <Text style={styles.weatherConditionText}>
               {weatherInfo.weatherDescription}
             </Text>
+
             <Text style={styles.weatherDetailText}>
               Area Kos • Lembap {weatherInfo.humidity}%
             </Text>
           </View>
 
-          {/* Kolom Kanan: Status Jemuran & Tombol Refresh */}
           <View style={styles.weatherRightSection}>
             <View
               style={[
@@ -143,6 +152,7 @@ function WeatherCard({
                     : styles.statusDotWarning,
                 ]}
               />
+
               <Text
                 style={[
                   styles.laundryPillText,
@@ -151,7 +161,9 @@ function WeatherCard({
                     : styles.laundryTextWarning,
                 ]}
               >
-                {weatherInfo.isSafeForLaundry ? "Aman Jemur" : "Waspada Hujan"}
+                {weatherInfo.isSafeForLaundry
+                  ? "Aman Jemur"
+                  : "Waspada Hujan"}
               </Text>
             </View>
 
@@ -162,7 +174,9 @@ function WeatherCard({
                 pressed && styles.buttonPressed,
               ]}
             >
-              <Text style={styles.weatherRefreshBtnText}>🔄 Perbarui</Text>
+              <Text style={styles.weatherRefreshBtnText}>
+                🔄 Perbarui
+              </Text>
             </Pressable>
           </View>
         </View>
@@ -175,23 +189,72 @@ export default function HomeScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const router = useRouter();
 
-  // State untuk fitur Cuaca Kos (Modul 3)
+  // Fungsi Logout (Modul 4)
+  async function handleLogout() {
+    if (Platform.OS === "web") {
+      const confirmed = window.confirm(
+        "Apakah kamu yakin ingin keluar dari akun?"
+      );
+
+      if (!confirmed) return;
+
+      await processLogout();
+      return;
+    }
+
+    Alert.alert(
+      "Konfirmasi Logout",
+      "Apakah kamu yakin ingin keluar dari akun?",
+      [
+        {
+          text: "Batal",
+          style: "cancel",
+        },
+        {
+          text: "Keluar",
+          style: "destructive",
+          onPress: processLogout,
+        },
+      ]
+    );
+  }
+
+  // Proses Logout Supabase
+  async function processLogout() {
+    try {
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        if (Platform.OS === "web") {
+          window.alert("Logout gagal: " + error.message);
+        } else {
+          Alert.alert("Logout Gagal", error.message);
+        }
+      }
+    } catch (error) {
+      console.error("Kesalahan Logout:", error);
+    }
+  }
+
+  // State Cuaca Kos
   const [weatherInfo, setWeatherInfo] = useState<WeatherInfo | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fungsi async untuk mengambil data cuaca dari API
+  // Mengambil data cuaca
   async function loadWeatherData() {
     setIsLoading(true);
     setError(null);
 
     try {
-      // async/await: menunggu hasil Promise dari fetchCurrentWeather()
       const data = await fetchCurrentWeather();
       setWeatherInfo(interpretWeather(data));
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Gagal mengambil data cuaca.";
+        err instanceof Error
+          ? err.message
+          : "Gagal mengambil data cuaca.";
+
       setError(message);
     } finally {
       setIsLoading(false);
@@ -212,7 +275,10 @@ export default function HomeScreen() {
       .catch((err) => {
         if (isMounted) {
           const message =
-            err instanceof Error ? err.message : "Gagal mengambil data cuaca.";
+            err instanceof Error
+              ? err.message
+              : "Gagal mengambil data cuaca.";
+
           setError(message);
           setIsLoading(false);
         }
@@ -237,13 +303,22 @@ export default function HomeScreen() {
       style={styles.container}
       showsVerticalScrollIndicator={false}
     >
-      {/* ================= HERO ================= */}
-
+      {/* HERO */}
       <View style={styles.hero}>
-        {/* Header Hero */}
-        <Text style={styles.logo}>KosMate</Text>
+        <View style={styles.header}>
+          <Text style={styles.logo}>KosMate</Text>
 
-        {/* Widget Cuaca & Info Kos (Modul 3) */}
+          <Pressable
+            onPress={handleLogout}
+            style={({ pressed }) => [
+              styles.logoutButton,
+              pressed && styles.buttonPressed,
+            ]}
+          >
+            <Text style={styles.logoutText}>Keluar</Text>
+          </Pressable>
+        </View>
+
         <WeatherCard
           weatherInfo={weatherInfo}
           isLoading={isLoading}
@@ -251,7 +326,6 @@ export default function HomeScreen() {
           onRefresh={loadWeatherData}
         />
 
-        {/* Isi hero */}
         <View style={styles.heroCenter}>
           <Text style={styles.heroTitle}>
             Kelola Kehidupan Kos
@@ -277,16 +351,16 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* ================= CONTENT ================= */}
-
+      {/* CONTENT */}
       <View style={styles.content}>
-        <Text style={styles.contentTitle}>Kelola Kebutuhanmu</Text>
+        <Text style={styles.contentTitle}>
+          Kelola Kebutuhanmu
+        </Text>
 
         <Text style={styles.contentDescription}>
           Pilih aktivitas yang ingin kamu kelola.
         </Text>
 
-        {/* Loop */}
         <View style={styles.activityList}>
           {activities.map((activity, index) => (
             <ActivityCard
@@ -305,17 +379,102 @@ export default function HomeScreen() {
             />
           ))}
         </View>
+
+        {/* CATATAN KOSMATE */}
+        <View style={styles.notesSection}>
+          <Text style={styles.notesTitle}>
+            Catatan Pribadi
+          </Text>
+
+          <Text style={styles.notesDescription}>
+            Simpan catatan penting kebutuhan dan kegiatan kosmu.
+          </Text>
+
+          <Pressable
+            onPress={() => router.push("/notes")}
+            style={({ pressed }) => [
+              styles.notesButton,
+              pressed && styles.cardPressed,
+            ]}
+          >
+            <Text style={styles.notesIcon}>📝</Text>
+
+            <View style={styles.notesInfo}>
+              <Text style={styles.notesButtonTitle}>
+                Catatan Saya
+              </Text>
+
+              <Text style={styles.notesButtonDescription}>
+                Lihat dan kelola catatan pribadi
+              </Text>
+            </View>
+
+            <Text style={styles.notesArrow}>›</Text>
+          </Pressable>
+        </View>
+
+        {/* MAKANAN VIRAL */}
+        <View style={styles.foodSection}>
+          <Text style={styles.foodTitle}>
+            Kuliner Mahasiswa
+          </Text>
+
+          <Text style={styles.foodDescription}>
+            Temukan rekomendasi makanan viral di sekitar kampus.
+          </Text>
+
+          <Pressable
+            onPress={() => router.push("/food")}
+            style={({ pressed }) => [
+              styles.foodButton,
+              pressed && styles.cardPressed,
+            ]}
+          >
+            <Text style={styles.foodIcon}>🍜</Text>
+
+            <View style={styles.foodInfo}>
+              <Text style={styles.foodButtonTitle}>
+                Makanan Viral
+              </Text>
+
+              <Text style={styles.foodButtonDescription}>
+                Lihat rekomendasi kuliner mahasiswa
+              </Text>
+            </View>
+
+            <Text style={styles.foodArrow}>›</Text>
+          </Pressable>
+        </View>
       </View>
     </ScrollView>
   );
 }
 
-// ================= STYLES =================
-
+// STYLES
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#0B1220",
+  },
+
+  // HEADER
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  logoutButton: {
+    backgroundColor: "#DFAF34",
+    paddingVertical: 9,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+
+  logoutText: {
+    color: "#0B1220",
+    fontWeight: "bold",
+    fontSize: 14,
   },
 
   // HERO
@@ -401,7 +560,7 @@ const styles = StyleSheet.create({
     gap: 15,
   },
 
-  // CARD
+  // CARD AKTIVITAS
   activityCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -445,7 +604,115 @@ const styles = StyleSheet.create({
     color: "#CBD5E1",
   },
 
-  // WEATHER WIDGET IN HERO (Modul 3)
+  // CATATAN KOSMATE
+  notesSection: {
+    marginTop: 35,
+  },
+
+  notesTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+  },
+
+  notesDescription: {
+    fontSize: 14,
+    color: "#CBD5E1",
+    marginTop: 8,
+    marginBottom: 18,
+  },
+
+  notesButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#111827",
+    borderRadius: 14,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#DFAF34",
+  },
+
+  notesIcon: {
+    fontSize: 32,
+    marginRight: 16,
+  },
+
+  notesInfo: {
+    flex: 1,
+  },
+
+  notesButtonTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#DFAF34",
+    marginBottom: 5,
+  },
+
+  notesButtonDescription: {
+    fontSize: 13,
+    color: "#CBD5E1",
+  },
+
+  notesArrow: {
+    fontSize: 28,
+    color: "#DFAF34",
+  },
+
+  // MAKANAN VIRAL
+  foodSection: {
+    marginTop: 35,
+  },
+
+  foodTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+  },
+
+  foodDescription: {
+    fontSize: 14,
+    color: "#CBD5E1",
+    marginTop: 8,
+    marginBottom: 18,
+  },
+
+  foodButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#111827",
+    borderRadius: 14,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#DFAF34",
+  },
+
+  foodIcon: {
+    fontSize: 32,
+    marginRight: 16,
+  },
+
+  foodInfo: {
+    flex: 1,
+  },
+
+  foodButtonTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#DFAF34",
+    marginBottom: 5,
+  },
+
+  foodButtonDescription: {
+    fontSize: 13,
+    color: "#CBD5E1",
+  },
+
+  foodArrow: {
+    fontSize: 28,
+    color: "#DFAF34",
+  },
+
+  // WEATHER WIDGET
   weatherCard: {
     marginTop: 20,
     backgroundColor: "#111827",
