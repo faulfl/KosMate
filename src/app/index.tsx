@@ -1,8 +1,6 @@
-
 import { useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Dimensions,
   Platform,
@@ -10,16 +8,10 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  View,
+  View
 } from "react-native";
 
 import { supabase } from "../../lib/supabase";
-
-import {
-  fetchCurrentWeather,
-  interpretWeather,
-} from "@/services/weatherService";
-import type { WeatherInfo } from "@/types/weather";
 
 const screenHeight = Dimensions.get("window").height;
 
@@ -72,116 +64,9 @@ function ActivityCard({
       <View style={styles.activityInfo}>
         <Text style={styles.activityTitle}>{activity.title}</Text>
 
-        <Text style={styles.activityDescription}>
-          {activity.description}
-        </Text>
+        <Text style={styles.activityDescription}>{activity.description}</Text>
       </View>
     </Pressable>
-  );
-}
-
-// Custom Function — Komponen Cuaca & Info Kos
-function WeatherCard({
-  weatherInfo,
-  isLoading,
-  error,
-  onRefresh,
-}: {
-  weatherInfo: WeatherInfo | null;
-  isLoading: boolean;
-  error: string | null;
-  onRefresh: () => void;
-}) {
-  return (
-    <View style={styles.weatherCard}>
-      {isLoading ? (
-        <View style={styles.weatherLoadingRow}>
-          <ActivityIndicator size="small" color="#DFAF34" />
-          <Text style={styles.weatherLoadingText}>
-            Memuat cuaca kos...
-          </Text>
-        </View>
-      ) : error ? (
-        <View style={styles.weatherErrorRow}>
-          <Text style={styles.weatherErrorText}>⚠️ {error}</Text>
-          <Pressable
-            onPress={onRefresh}
-            style={({ pressed }) => [
-              styles.weatherRetryButton,
-              pressed && styles.buttonPressed,
-            ]}
-          >
-            <Text style={styles.weatherRetryText}>Coba lagi</Text>
-          </Pressable>
-        </View>
-      ) : weatherInfo ? (
-        <View style={styles.weatherCardInner}>
-          <View style={styles.weatherLeftSection}>
-            <View style={styles.weatherHeadlineRow}>
-              <Text style={styles.weatherIconEmoji}>
-                {weatherInfo.weatherIcon}
-              </Text>
-              <Text style={styles.weatherTempText}>
-                {weatherInfo.temperature}°C
-              </Text>
-            </View>
-
-            <Text style={styles.weatherConditionText}>
-              {weatherInfo.weatherDescription}
-            </Text>
-
-            <Text style={styles.weatherDetailText}>
-              Area Kos • Lembap {weatherInfo.humidity}%
-            </Text>
-          </View>
-
-          <View style={styles.weatherRightSection}>
-            <View
-              style={[
-                styles.laundryPill,
-                weatherInfo.isSafeForLaundry
-                  ? styles.laundryPillSafe
-                  : styles.laundryPillWarning,
-              ]}
-            >
-              <View
-                style={[
-                  styles.statusDot,
-                  weatherInfo.isSafeForLaundry
-                    ? styles.statusDotSafe
-                    : styles.statusDotWarning,
-                ]}
-              />
-
-              <Text
-                style={[
-                  styles.laundryPillText,
-                  weatherInfo.isSafeForLaundry
-                    ? styles.laundryTextSafe
-                    : styles.laundryTextWarning,
-                ]}
-              >
-                {weatherInfo.isSafeForLaundry
-                  ? "Aman Jemur"
-                  : "Waspada Hujan"}
-              </Text>
-            </View>
-
-            <Pressable
-              onPress={onRefresh}
-              style={({ pressed }) => [
-                styles.weatherRefreshBtn,
-                pressed && styles.buttonPressed,
-              ]}
-            >
-              <Text style={styles.weatherRefreshBtnText}>
-                🔄 Perbarui
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      ) : null}
-    </View>
   );
 }
 
@@ -193,7 +78,7 @@ export default function HomeScreen() {
   async function handleLogout() {
     if (Platform.OS === "web") {
       const confirmed = window.confirm(
-        "Apakah kamu yakin ingin keluar dari akun?"
+        "Apakah kamu yakin ingin keluar dari akun?",
       );
 
       if (!confirmed) return;
@@ -215,7 +100,7 @@ export default function HomeScreen() {
           style: "destructive",
           onPress: processLogout,
         },
-      ]
+      ],
     );
   }
 
@@ -235,59 +120,6 @@ export default function HomeScreen() {
       console.error("Kesalahan Logout:", error);
     }
   }
-
-  // State Cuaca Kos
-  const [weatherInfo, setWeatherInfo] = useState<WeatherInfo | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Mengambil data cuaca
-  async function loadWeatherData() {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const data = await fetchCurrentWeather();
-      setWeatherInfo(interpretWeather(data));
-    } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : "Gagal mengambil data cuaca.";
-
-      setError(message);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  // Mengambil data saat halaman pertama kali dimuat
-  useEffect(() => {
-    let isMounted = true;
-
-    fetchCurrentWeather()
-      .then((data) => {
-        if (isMounted) {
-          setWeatherInfo(interpretWeather(data));
-          setIsLoading(false);
-        }
-      })
-      .catch((err) => {
-        if (isMounted) {
-          const message =
-            err instanceof Error
-              ? err.message
-              : "Gagal mengambil data cuaca.";
-
-          setError(message);
-          setIsLoading(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   // Custom Function untuk scroll
   function handleStart() {
@@ -319,13 +151,6 @@ export default function HomeScreen() {
           </Pressable>
         </View>
 
-        <WeatherCard
-          weatherInfo={weatherInfo}
-          isLoading={isLoading}
-          error={error}
-          onRefresh={loadWeatherData}
-        />
-
         <View style={styles.heroCenter}>
           <Text style={styles.heroTitle}>
             Kelola Kehidupan Kos
@@ -353,9 +178,7 @@ export default function HomeScreen() {
 
       {/* CONTENT */}
       <View style={styles.content}>
-        <Text style={styles.contentTitle}>
-          Kelola Kebutuhanmu
-        </Text>
+        <Text style={styles.contentTitle}>Kelola Kebutuhanmu</Text>
 
         <Text style={styles.contentDescription}>
           Pilih aktivitas yang ingin kamu kelola.
@@ -382,9 +205,7 @@ export default function HomeScreen() {
 
         {/* CATATAN KOSMATE */}
         <View style={styles.notesSection}>
-          <Text style={styles.notesTitle}>
-            Catatan Pribadi
-          </Text>
+          <Text style={styles.notesTitle}>Catatan Pribadi</Text>
 
           <Text style={styles.notesDescription}>
             Simpan catatan penting kebutuhan dan kegiatan kosmu.
@@ -400,9 +221,7 @@ export default function HomeScreen() {
             <Text style={styles.notesIcon}>📝</Text>
 
             <View style={styles.notesInfo}>
-              <Text style={styles.notesButtonTitle}>
-                Catatan Saya
-              </Text>
+              <Text style={styles.notesButtonTitle}>Catatan Saya</Text>
 
               <Text style={styles.notesButtonDescription}>
                 Lihat dan kelola catatan pribadi
@@ -415,9 +234,7 @@ export default function HomeScreen() {
 
         {/* MAKANAN VIRAL */}
         <View style={styles.foodSection}>
-          <Text style={styles.foodTitle}>
-            Kuliner Mahasiswa
-          </Text>
+          <Text style={styles.foodTitle}>Kuliner Mahasiswa</Text>
 
           <Text style={styles.foodDescription}>
             Temukan rekomendasi makanan viral di sekitar kampus.
@@ -433,9 +250,7 @@ export default function HomeScreen() {
             <Text style={styles.foodIcon}>🍜</Text>
 
             <View style={styles.foodInfo}>
-              <Text style={styles.foodButtonTitle}>
-                Makanan Viral
-              </Text>
+              <Text style={styles.foodButtonTitle}>Makanan Viral</Text>
 
               <Text style={styles.foodButtonDescription}>
                 Lihat rekomendasi kuliner mahasiswa
@@ -712,99 +527,6 @@ const styles = StyleSheet.create({
     color: "#DFAF34",
   },
 
-  // WEATHER WIDGET
-  weatherCard: {
-    marginTop: 20,
-    backgroundColor: "#111827",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#1E293B",
-    paddingVertical: 14,
-    paddingHorizontal: 18,
-  },
-
-  weatherLoadingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 8,
-    gap: 10,
-  },
-
-  weatherLoadingText: {
-    fontSize: 13,
-    color: "#94A3B8",
-  },
-
-  weatherErrorRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-
-  weatherErrorText: {
-    fontSize: 12,
-    color: "#F87171",
-    flex: 1,
-  },
-
-  weatherRetryButton: {
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    backgroundColor: "#1F2937",
-    borderRadius: 6,
-  },
-
-  weatherRetryText: {
-    fontSize: 12,
-    color: "#DFAF34",
-    fontWeight: "600",
-  },
-
-  weatherCardInner: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-
-  weatherLeftSection: {
-    flex: 1,
-  },
-
-  weatherHeadlineRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-
-  weatherIconEmoji: {
-    fontSize: 26,
-  },
-
-  weatherTempText: {
-    fontSize: 26,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-  },
-
-  weatherConditionText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#CBD5E1",
-    marginTop: 2,
-  },
-
-  weatherDetailText: {
-    fontSize: 11,
-    color: "#64748B",
-    marginTop: 2,
-  },
-
-  weatherRightSection: {
-    alignItems: "flex-end",
-    gap: 8,
-  },
-
   laundryPill: {
     flexDirection: "row",
     alignItems: "center",
@@ -850,18 +572,5 @@ const styles = StyleSheet.create({
 
   laundryTextWarning: {
     color: "#FBBF24",
-  },
-
-  weatherRefreshBtn: {
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    backgroundColor: "#1F2937",
-    borderRadius: 8,
-  },
-
-  weatherRefreshBtnText: {
-    fontSize: 11,
-    color: "#94A3B8",
-    fontWeight: "500",
   },
 });

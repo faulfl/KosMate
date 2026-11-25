@@ -1,43 +1,51 @@
-
-import { useState } from 'react';
+import { Link } from "expo-router";
+import { useState } from "react";
 import {
-  View,
-  Text,
-  TextInput,
+  ActivityIndicator,
+  Alert,
   Pressable,
   StyleSheet,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
-import { Link, router } from 'expo-router';
-import { supabase } from '../../../lib/supabase';
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { supabase } from "../../../lib/supabase";
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleLogin() {
-    if (!email.trim() || !password) {
-      Alert.alert('Perhatian', 'Email dan password wajib diisi.');
+    const cleanEmail = email.trim();
+
+    if (!cleanEmail || !password) {
+      Alert.alert("Perhatian", "Email dan password wajib diisi.");
       return;
     }
 
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password,
+      });
 
-    setLoading(false);
+      if (error) {
+        Alert.alert("Login Gagal", error.message);
+        return;
+      }
 
-    if (error) {
-      Alert.alert('Login Gagal', error.message);
-      return;
+      // Berhasil login — pengalihan rute akan ditangani otomatis oleh AuthGuard di _layout.tsx
+    } catch (err) {
+      Alert.alert(
+        "Kesalahan Jaringan",
+        err instanceof Error ? err.message : "Gagal terhubung ke server.",
+      );
+    } finally {
+      setLoading(false);
     }
-
-    router.replace('/');
   }
 
   return (
@@ -64,11 +72,7 @@ export default function LoginScreen() {
         secureTextEntry
       />
 
-      <Pressable
-        style={styles.button}
-        onPress={handleLogin}
-        disabled={loading}
-      >
+      <Pressable style={styles.button} onPress={handleLogin} disabled={loading}>
         {loading ? (
           <ActivityIndicator color="#0B1220" />
         ) : (
@@ -89,56 +93,56 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0B1220',
-    justifyContent: 'center',
+    backgroundColor: "#0B1220",
+    justifyContent: "center",
     padding: 28,
   },
   title: {
     fontSize: 36,
-    fontWeight: 'bold',
-    color: '#DFAF34',
-    textAlign: 'center',
+    fontWeight: "bold",
+    color: "#DFAF34",
+    textAlign: "center",
   },
   subtitle: {
-    color: '#FFFFFF',
-    textAlign: 'center',
+    color: "#FFFFFF",
+    textAlign: "center",
     marginBottom: 35,
     marginTop: 8,
   },
   label: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     marginBottom: 8,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   input: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     padding: 14,
     borderRadius: 10,
     marginBottom: 18,
-    color: '#0B1220',
+    color: "#0B1220",
   },
   button: {
-    backgroundColor: '#DFAF34',
+    backgroundColor: "#DFAF34",
     padding: 15,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 8,
   },
   buttonText: {
-    color: '#0B1220',
-    fontWeight: 'bold',
+    color: "#0B1220",
+    fontWeight: "bold",
     fontSize: 16,
   },
   registerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginTop: 22,
   },
   normalText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   link: {
-    color: '#DFAF34',
-    fontWeight: 'bold',
+    color: "#DFAF34",
+    fontWeight: "bold",
   },
 });
